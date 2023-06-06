@@ -1,9 +1,10 @@
 ARG BASE_IMAGE=ghcr.io/xtruder/kali-default:latest
 FROM ${BASE_IMAGE}
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -yq \
-        kali-desktop-xfce xorg xrdp firefox-esr && \
-    apt-get clean
+RUN DEBIAN_FRONTEND=noninteractive 
+RUN apt-get install -yq \
+        kali-desktop-xfce xorg xrdp firefox-esr && \RUN   
+ RUN apt-get clean       
 
 RUN apt install  wget unzip -y > /dev/null 2>&1
 
