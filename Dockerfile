@@ -1,5 +1,4 @@
-ARG BASE_IMAGE=ghcr.io/xtruder/kali-default:latest
-FROM ${BASE_IMAGE}
+FROM kalilinux/kali-rolling
 
 RUN DEBIAN_FRONTEND=noninteractive 
 RUN apt-get install -yq \
