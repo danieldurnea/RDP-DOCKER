@@ -1,18 +1,91 @@
-name: Docker Image CI
+name: CI [Ubuntu] beta
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+on: [workflow_dispatch]
 
 jobs:
-
   build:
 
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+    - name: Install Unzipper
+      run: sudo apt-get install unzip -y
+    - name: Download
+      run: wget -O ngrok.zip https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-arm.zip
+    - name: Extract
+      run: unzip ngrok.zip
+    - name: Install Libraries
+      run: |
+       sudo apt install snapd
+       sudo apt install openssh-server
+       sudo systemctl status ssh
+       sudo apt install xrdp
+       sudo apt install xfce4
+       sudo apt install xfce4-goodies
+    - name: Adding Architecture amd64
+      run: |
+       sudo apt update
+       sudo apt install -y qemu-user-static binfmt-support
+       sudo dpkg --add-architecture amd64
+       sudo apt update
+       sudo apt install libc6:amd64
+    - name: Creating New User
+      run: |
+        user=dd-admin
+        password=Dd-admin
+        sudo adduser --quiet --disabled-password --shell /bin/bash --home /home/$user --gecos "User" $user
+        # set password
+        echo "$user:$password" | sudo chpasswd
+        echo User: $user has been created with password: $password
+        sudo usermod -aG sudo $user
+        #SCRIPT END
+    - name: Auth
+      run: |
+        sudo bash -c 'cat > /etc/polkit-1/localauthority.conf.d/02-allow-colord.conf' << EOF
+        polkit.addRule(function(action, subject) {
+        if ((action.id == "org.freedesktop.color-manager.create-device" ||
+        action.id == "org.freedesktop.color-manager.create-profile" ||
+        action.id == "org.freedesktop.color-manager.delete-device" ||
+        action.id == "org.freedesktop.color-manager.delete-profile" ||
+        action.id == "org.freedesktop.color-manager.modify-device" ||
+        action.id == "org.freedesktop.color-manager.modify-profile") &&
+        subject.isInGroup("{users}")) {
+        return polkit.Result.YES;
+        }
+        });
+        EOF
+    - name: Config RDP in Ubuntu(XRDP)
+      run: |
+       sudo ufw allow 3389/tcp #setting tcp port
+       if [ -f /home/${USER}/.xsession ]; then #session manager
+           rm -f /home/${USER}/.xsession
+       fi
+       cat << 'EOF' >> /home/${USER}/.xsession
+       export LOGNAME=$USER
+       export LIBGL_ALWAYS_INDIRECT=1
+       unset SESSION_MANAGER
+       unset DBUS_SESSION_BUS_ADDRESS
+       mate-session
+       EOF
+       chmod +x /home/${USER}/.xsession #session manager
+    - name: Run Bash
+      run: sudo sed -i "s|#\!/bin/sh|#\!/bin/bash|g" /etc/X11/Xsession
+    - name: Starting XRDP
+      run: |
+        sudo adduser xrdp ssl-cert
+        sudo service xrdp restart
+        sudo service xrdp status
+    - name: Config Of XRDP vim
+      run: |
+        sudo apt install nano -y
+        echo `cat /etc/xrdp/xrdp.ini`
+    - name: Make Ngrok Executable
+      run: sudo cp ./ngrok /usr/bin/ngrok
+    - name: Auth
+      env:
+        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+      run: ngrok authtoken $NGROK_AUTH_TOKEN
+#      run: ngrok config add-authtoken $Env:NGROK_AUTH_TOKEN
+
+    - name: Create Tunnel
+      run: ngrok tcp 3389
