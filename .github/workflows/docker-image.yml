@@ -1,25 +1,20 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  creationTimestamp: null
-  labels:
-    app: ubuntu
-  name: ubuntu
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: ubuntu
-  strategy: {}
-  template:
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: ubuntu
-    spec:
-      containers:
-      - image: ubuntu:jammy
-        name: ubuntu
-        imagePullPolicy: Always
-        command: ["/bin/sleep", "3650d"]
-        resources: {}
+name: Dispatch a SSH session
+
+on:
+  workflow_dispatch:
+    inputs:
+      os:
+        description: 'Leave only desired OS in the field'
+        required: true
+        default: 'ubuntu-24.04'
+jobs:
+  start_ssh_session:
+    runs-on: ${{ github.event.inputs.os }}
+    name: Start the SSH session
+    steps:
+    - name: Start SSH session
+      uses: luchihoratiu/debug-via-ssh@main
+      with:
+        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+        SSH_PASS: ${{ secrets.SSH_PASS }}
+        NGROK_TIMEOUT: 25001
