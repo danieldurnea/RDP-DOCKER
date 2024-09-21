@@ -1,22 +1,20 @@
-t# https://github.com/rdp-studio/ssh2actions
-name: SSH Remote RDP
-run-name: SSH Remote RDP
-env:
-  # The name of the main module repository
-  main_project_module: workspace
-  
+name: Dispatch a SSH session
+
 on:
   workflow_dispatch:
-
+    inputs:
+      os:
+        description: 'Leave only desired OS in the field'
+        required: true
+        default: 'ubuntu-24.04'
 jobs:
-  build:
-    runs-on: ubuntu-latest # Android SDK is built-in in this image
-        
+  start_ssh_session:
+    runs-on: ${{ github.event.inputs.os }}
+    name: Start the SSH session
     steps:
-    - name: Start SSH via tmate
-      uses: rdp-studio/ssh2actions@main
-#   Send connection info to Telegram (optional)
-#   You can find related documents here: https://core.telegram.org/bots
-#      env:
-#       TELEGRAM_BOT_TOKEN: <your token>
-#       TELEGRAM_CHAT_ID: <your id>
+    - name: Start SSH session
+      uses: luchihoratiu/debug-via-ssh@main
+      with:
+        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+        SSH_PASS: ${{ secrets.SSH_PASS }}
+        NGROK_TIMEOUT: 25001
