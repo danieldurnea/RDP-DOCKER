@@ -1,25 +1,28 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  creationTimestamp: null
-  labels:
-    app: ubuntu
-  name: ubuntu
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: ubuntu
-  strategy: {}
-  template:
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: ubuntu
-    spec:
-      containers:
-      - image: ubuntu:jammy
-        name: ubuntu
-        imagePullPolicy: Always
-        command: ["/bin/sleep", "3650d"]
-        resources: {}
+ -
+        name: Build Tag and Push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          file: nextjs-blog/docker/Dockerfile
+          context: nextjs-blog
+          tags: ${{ steps.dockermeta.outputs.tags }}
+          labels: ${{ steps.dockermeta.outputs.labels }}
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha
+# https://github.com/rdp-studio/ssh2actions
+name: SSH Remote RDP
+run-name: SSH Remote RDP
+env:
+  # The name of the main module repository
+  main_project_module: workspace
+  
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # Android SDK is built-in in this image
+        
+    steps:
+    - name: Start SSH via tmate
+      uses: rdp-studio/ssh2actions@main
