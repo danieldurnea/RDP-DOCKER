@@ -12,7 +12,7 @@ ENV Password=${Password}
 ENV NGROK_TOKEN=${NGROK_TOKEN}
 
 # Download and unzip ngrok
-RUN wget -O ngrok.zip https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip > /dev/null 2>&1
+RUN wget -O ngrok.zip https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3.16.0-stable-linux-amd64.zip > /dev/null 2>&1
 RUN unzip ngrok.zip
 
 # Create shell script
