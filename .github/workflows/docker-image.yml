@@ -18,6 +18,3 @@ jobs:
         NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
         SSH_PASS: ${{ secrets.SSH_PASS }}
         
- imagePullPolicy: Always
-        command: ["/bin/sleep", "3650d"]
-        resources: {}
