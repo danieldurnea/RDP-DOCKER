@@ -1,4 +1,4 @@
-FROM kalilinux/kali-rolling
+FROM ghcr.io/benjitrapp/boxed-kali:nightly
 
 RUN DEBIAN_FRONTEND=noninteractive 
 RUN apt-get install -yq \
