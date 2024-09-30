@@ -1,11 +1,9 @@
 FROM ghcr.io/benjitrapp/boxed-kali:nightly
 
 RUN DEBIAN_FRONTEND=noninteractive 
-RUN apt-get install -yq \
-        kali-desktop-xfce xorg xrdp firefox-esr && \RUN   
  RUN apt-get clean       
 
-RUN apt install  wget unzip -y > /dev/null 2>&1
+RUN apt install  wget ssh unzip -y > /dev/null 2>&1
 ARG NGROK_TOKEN
 ARG Password
 ENV Password=${Password}
@@ -28,6 +26,6 @@ RUN chmod 755 kali.sh
 # Expose port
 COPY docker-entrypoint.sh /
 
-EXPOSE 3389/tcp
+EXPOSE 22/tcp
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["sleep", "infinity"]
