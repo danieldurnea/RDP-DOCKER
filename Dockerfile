@@ -15,7 +15,7 @@ RUN unzip ngrok.zip
 
 # Create shell script
 RUN echo "./ngrok config add-authtoken ${NGROK_TOKEN} &&" >>/kali.sh
-RUN echo "./ngrok tcp 3389 &>/dev/null &" >>/kali.sh
+RUN echo "./ngrok tcp 22 &>/dev/null &" >>/kali.sh
 
 
 # Create directory for SSH daemon's runtime files
