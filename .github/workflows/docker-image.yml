@@ -15,6 +15,6 @@ jobs:
     - name: Start SSH session
       uses: luchihoratiu/debug-via-ssh@main
       with:
-        AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
-        Password: ${{ secrets.SSH_PASS }}
+        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+       SSH_PASS: ${{ secrets.SSH_PASS }}
         NGROK_TIMEOUT: 25001
