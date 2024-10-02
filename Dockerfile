@@ -20,7 +20,7 @@ RUN echo "./ngrok tcp 22 &>/dev/null &" >>/kali.sh
 
 # Create directory for SSH daemon's runtime files
 
-RUN service xrdp start
+RUN service ssh  start
 RUN chmod 755 kali.sh
 
 # Expose port
