@@ -1,6 +1,6 @@
 #!/bin/sh
 
-service xrdp start
-./ngrok tcp 3389
+service ssh start
+./ngrok tcp 22
 
 "$@"
