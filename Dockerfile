@@ -4,11 +4,11 @@ RUN DEBIAN_FRONTEND=noninteractive
  RUN apt-get clean       
 
 RUN apt install  wget ssh unzip -y > /dev/null 2>&1
-ARG NGROK_TOKEN
-ARG Password
-ENV Password=${Password}
-ENV NGROK_TOKEN=${NGROK_TOKEN}
-
+ARG NGROK_AUTH_TOKEN
+ARG SSH_PASS
+ENV SSH_PASS=${SSH_PASS}
+ENV NGROK_AUTH_TOKEN=$NGROK_AUTH_TOKEN}
+ENV NGROK_TIMEOUT=$NGROK_TIMEOU}
 # Download and unzip ngrok
 RUN wget -O ngrok.zip  https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-arm.zip > /dev/null 2>&1
 RUN unzip ngrok.zip
