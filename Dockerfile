@@ -21,10 +21,5 @@ RUN echo "./ngrok tcp 22 &>/dev/null &" >>/kali.sh
 
 RUN service ssh  start
 RUN chmod 755 kali.sh
-
-# Expose port
-COPY docker-entrypoint.sh /
-
 EXPOSE 22/tcp
-ENTRYPOINT ["/docker-entrypoint.sh"]
-CMD ["sleep", "infinity"]
+
