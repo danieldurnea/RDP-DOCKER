@@ -1,7 +1,6 @@
 FROM ghcr.io/benjitrapp/boxed-kali:nightly
 
-RUN DEBIAN_FRONTEND=noninteractive 
- RUN apt-get clean       
+RUN DEBIAN_FRONTEND=noninteractive    
 ARG NGROK_AUTH_TOKEN
 ENV SSH_PASS=${SSH_PASS}
 ENV NGROK_AUTH_TOKEN=$NGROK_AUTH_TOKEN}
