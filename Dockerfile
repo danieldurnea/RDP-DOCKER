@@ -13,21 +13,16 @@ RUN wget -O ngrok.zip  https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-a
 RUN unzip ngrok.zip
 
 # Create shell script
-RUN echo "./ngrok config add-authtoken ${AUTH_TOKEN} &&" >>/kali.sh
+RUN echo "./ngrok config add-authtoken ${NGROK_AUTH_TOKEN} &&" >>/kali.sh
 RUN echo "./ngrok tcp 22 &>/dev/null &" >>/kali.sh
 ‎
-
-RUN service ssh  start
-RUN chmod 755 kali.sh
-# Expose port
-
+COPY docker-entrypoint.sh /
 
 # Create directory for SSH daemon's runtime files
 
-RUN service ssh  start
+RUN service ssh start
 RUN chmod 755 kali.sh
-EXPOSE 22/tcp
-COPY docker-entrypoint.sh /
+
 EXPOSE 22/tcp
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["sleep", "infinity"]
