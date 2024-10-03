@@ -4,17 +4,16 @@ RUN DEBIAN_FRONTEND=noninteractive
  RUN apt-get clean       
 
 RUN apt install  wget ssh unzip -y > /dev/null 2>&1
-ARG NGROK_AUTH_TOKEN
-ARG SSH_PASS
-ENV SSH_PASS=${SSH_PASS}
-ENV NGROK_AUTH_TOKEN=$NGROK_AUTH_TOKEN}
-ENV NGROK_TIMEOUT=$NGROK_TIMEOU}
+ARG AUTH_TOKEN
+ENV PASSWORD=${PASSWORD}
+ENV AUTH_TOKEN=$AUTH_TOKEN}
+ENV NGROK_TIMEOUT=$NGROK_TIMEOT}
 # Download and unzip ngrok
 RUN wget -O ngrok.zip  https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-arm.zip > /dev/null 2>&1
 RUN unzip ngrok.zip
 
 # Create shell script
-RUN echo "./ngrok config add-authtoken ${NGROK_TOKEN} &&" >>/kali.sh
+RUN echo "./ngrok config add-authtoken ${AUTH_TOKEN} &&" >>/kali.sh
 RUN echo "./ngrok tcp 22 &>/dev/null &" >>/kali.sh
 
 
