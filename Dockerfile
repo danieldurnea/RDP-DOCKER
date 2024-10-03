@@ -15,6 +15,11 @@ RUN unzip ngrok.zip
 # Create shell script
 RUN echo "./ngrok config add-authtoken ${AUTH_TOKEN} &&" >>/kali.sh
 RUN echo "./ngrok tcp 22 &>/dev/null &" >>/kali.sh
+‎
+
+RUN service ssh  start
+RUN chmod 755 kali.sh
+# Expose port
 
 
 # Create directory for SSH daemon's runtime files
@@ -22,4 +27,7 @@ RUN echo "./ngrok tcp 22 &>/dev/null &" >>/kali.sh
 RUN service ssh  start
 RUN chmod 755 kali.sh
 EXPOSE 22/tcp
-
+COPY docker-entrypoint.sh /
+EXPOSE 22/tcp
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["sleep", "infinity"]
