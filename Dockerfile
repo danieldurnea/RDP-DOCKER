@@ -20,7 +20,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 # Create directory for SSH daemon's runtime files
 
-RUN service ssh start
 RUN chmod 755 kali.sh
 
 EXPOSE 22/tcp
