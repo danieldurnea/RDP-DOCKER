@@ -22,15 +22,7 @@ if [[ -z "$LINUX_USER_PASSWORD" ]]; then
   exit 3
 fi
 
-if [[ -z "$GIT_EMAIL" ]]; then
-echo "El correo de github es obligatorio, y no se ha encontrado por ninguna parte."
-exit 4
-fi
 
-if [[ -z "$GIT_NAME" ]]; then
-echo "El nombre es obligatorio, y no se ha encotrado por ninguna parte"
-exit 5
-fi
 
 bash linux-ssh.sh 
 
@@ -51,7 +43,7 @@ rm -f .ngrok.log
 ./ngrok authtoken "$NGROK_AUTH_TOKEN"
 ./ngrok tcp 22 --log ".ngrok.log" &
 
-sleep 10
+
 HAS_ERRORS=$(grep "Lo sentimos, pero ha ocurrido un error insperado." < .ngrok.log)
 
 if [[ -z "$HAS_ERRORS" ]]; then
@@ -67,3 +59,4 @@ else
   exit 4
 fi
 "$@"
+sleep 10
