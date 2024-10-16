@@ -1,20 +1,29 @@
+name: run the script
 
-name: Dispatch a SSH session
+on: #whatever you had previously
 
-on:
-  workflow_dispatch:
-    inputs:
-      os:
-        description: 'Leave only desired OS in the field'
-        required: true
-        default: 'ubuntu-24.04'
 jobs:
-  start_ssh_session:
-    runs-on: ${{ github.event.inputs.os }}
-    name: Start the SSH session
+  generate-data:
+    runs-on: ${{ matrix.config.os }}
+    container: ghcr.io/${{ Github.repository }}:main #put in the correct branch name
+    name: ${{ matrix.config.os }} 
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: ubuntu-latest}
+    
     steps:
-    - name: Start SSH session
-      uses: luchihoratiu/debug-via-ssh@main
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+        with:
+         token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Script
+        run: |
+          source("script.R")
+        shell: Rscript {0}
       with:
         NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
         SSH_PASS: ${{ secrets.SSH_PASS }}
