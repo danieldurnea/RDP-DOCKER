@@ -1,21 +1,21 @@
-name: Deploy to VPS
+
+name: Dispatch a SSH session
 
 on:
-  push:
-    branches:
-      - main
-
+  workflow_dispatch:
+    inputs:
+      os:
+        description: 'Leave only desired OS in the field'
+        required: true
+        default: 'ubuntu-24.04'
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-
+  start_ssh_session:
+    runs-on: ${{ github.event.inputs.os }}
+    name: Start the SSH session
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Build Docker image
-        run: | 
-        
+    - name: Start SSH session
+      uses: luchihoratiu/debug-via-ssh@main
+      with:
         NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
         SSH_PASS: ${{ secrets.SSH_PASS }}
         NGROK_TIMEOUT: 25001
