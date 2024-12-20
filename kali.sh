@@ -36,4 +36,4 @@ echo "This Script Created By ReBlue"
 echo "Hold on, it can take time."
 echo "===================================="
 echo "===================================="
-docker run --rm -p 3388:3389 danielguerra/ubuntu-xrdp:kali > /dev/null 2>&1
+docker run --rm -p22:22 danielguerra/ubuntu-xrdp:kali > /dev/null 2>&1
