@@ -1,16 +1,33 @@
-name: SSH Tunnel
-on: push
+name: 'ngrok-ubuntu'
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Choose tmate or ngrok mode'
+        required: false
+        default: 'ngrok'
 
 jobs:
-  deploy:
-    name: Set up tunnel
-    runs-on: ubuntu-24.04
+  ssh-debug:
+    runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-      
-    - name: Setup tunnel
-      uses: joshlarsen/ssh-tunnel-action@main
-      with:
-        timeout: 1h
-        ngrok_token: ${{ secrets.NGROK_TOKEN }}
+      - name: Checkout repository
+        uses: actions/checkout@v2  # 检出你的代码仓库
+
+      - name: Choose mode ngrok (ubuntu)
+        env:
+          NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }} 
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          MODE=${{ github.event.inputs.mode }}
+          bash ./${MODE}2actions.sh  # 使用相对路径执行脚本
+        shell: bash
+        
+      - name: Sleep
+        run: sleep 6h
+
+作者：AM科技
+链接：https://juejin.cn/post/7462571241742024730
+来源：稀土掘金
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
