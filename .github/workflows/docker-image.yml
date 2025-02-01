@@ -9,18 +9,3 @@ jobs:
       uses: mxschmitt/action-tmate@v3
       with:
         limit-access-to-actor: true
-      run: ./linux-ssh.sh it bloke build
-    - name: Preparing Linux Environment
-      run: sudo apt-get update
-    - name: Setting Up the Ubuntu Environment
-    #  if: ${{ failure() }}
-      run: bash linux-ssh.sh
-      env:
-        LINUX_USER_PASSWORD: ${{ secrets.LINUX_USER_PASSWORD }}
-      
-
-    - name: Keep Running Ubuntu System and keepAlive
-     # if: ${{ failure() }}
-      run: sleep 6h
-
-   
