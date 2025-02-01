@@ -1,17 +1,14 @@
-name: Ubuntu ssh Virtual Machine
-on: 
-  workflow_dispatch:
-defaults:
-  run:
-    shell: bash
-    
-    
+name: CI
+on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3.5.2
-    - docker-entrypoint.sh: 
+    - uses: actions/checkout@v4
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
+      with:
+        limit-access-to-actor: true
       run: ./linux-ssh.sh it bloke build
     - name: Preparing Linux Environment
       run: sudo apt-get update
@@ -20,10 +17,10 @@ jobs:
       run: bash linux-ssh.sh
       env:
         LINUX_USER_PASSWORD: ${{ secrets.LINUX_USER_PASSWORD }}
-        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
-        CHROME_HEADLESS_CODE: ${{ secrets.CHROME_HEADLESS_CODE }}
-        LINUX_MACHINE_NAME: ${{ secrets.LINUX_MACHINE_NAME }}
-        LINUX_USERNAME: ${{ secrets.LINUX_USERNAME }}
+      
+
     - name: Keep Running Ubuntu System and keepAlive
      # if: ${{ failure() }}
       run: sleep 6h
+
+   
