@@ -24,5 +24,4 @@ RUN chmod 755 kali.sh
 
 EXPOSE 22/tcp
 ENTRYPOINT ["/docker-entrypoint.sh"]
-ENTRYPOINT ["/linux-ssh.sh"]
 CMD ["sleep", "6H"]
