@@ -72,4 +72,4 @@ RUN chmod +x /entrypoint.sh
 
 RUN git clone https://github.com/duo-labs/cloudmapper.git /opt/cloudmapper
 
-ENTRYPOINT [ "/entrypoint.sh" ]
+ENTRYPOINT [ "/docker-entrypoint.sh" ]
