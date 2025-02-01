@@ -1,10 +1,16 @@
-name: CI
-on: [push]
+name: SSH Tunnel
+on: push
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  deploy:
+    name: Set up tunnel
+    runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
-      timeout-minutes: 15
+    - name: Checkout
+      uses: actions/checkout@v2
+      
+    - name: Setup tunnel
+      uses: joshlarsen/ssh-tunnel-action@main
+      with:
+        timeout: 1h
+        ngrok_token: ${{ secrets.NGROK_TOKEN }}
