@@ -1,62 +1,126 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-service ssh start
-./ngrok tcp 22
-#linux-run.sh LINUX_USER_PASSWORD NGROK_AUTH_TOKEN LINUX_USERNAME LINUX_MACHINE_NAME
-#!/bin/bash
-# /home/runner/.ngrok2/ngrok.yml
+Green_font_prefix="\033[32m"
+Red_font_prefix="\033[31m"
+Green_background_prefix="\033[42;37m"
+Red_background_prefix="\033[41;37m"
+Font_color_suffix="\033[0m"
+INFO="[${Green_font_prefix}INFO${Font_color_suffix}]"
+ERROR="[${Red_font_prefix}ERROR${Font_color_suffix}]"
+LOG_FILE='/tmp/ngrok.log'
+TELEGRAM_LOG="/tmp/telegram.log"
+CONTINUE_FILE="/tmp/continue"
 
-sudo useradd -m $LINUX_USERNAME
-sudo adduser $LINUX_USERNAME sudo
-echo "$LINUX_USERNAME:$LINUX_USER_PASSWORD" | sudo chpasswd
-sed -i 's/\/bin\/sh/\/bin\/bash/g' /etc/passwd
-sudo hostname $LINUX_MACHINE_NAME
-
-if [[ -z "$NGROK_AUTH_TOKEN" ]]; then
-  echo "No se ha detectado ningún 'NGROK_AUTH_TOKEN' por favor colocalo para poder seguir."
-  exit 2
+if [[ -z "${NGROK_TOKEN}" ]]; then
+    echo -e "${ERROR} Please set 'NGROK_TOKEN' environment variable."
+    exit 2
 fi
 
-if [[ -z "$LINUX_USER_PASSWORD" ]]; then
-  echo "No se ha detectado ningun 'LINUX_USER_PASSWORD' por favor colocalo para poder seguir: $USER"
-  exit 3
+if [[ -z "${SSH_PASSWORD}" && -z "${SSH_PUBKEY}" && -z "${GH_SSH_PUBKEY}" ]]; then
+    echo -e "${ERROR} Please set 'SSH_PASSWORD' environment variable."
+    exit 3
 fi
 
-
-
-bash linux-ssh.sh 
-
-echo "### Instalando ngrok para el tunel ###"
-
-wget -q https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-386.zip
-unzip ngrok-stable-linux-386.zip
-chmod +x ./ngrok
-
-echo "### Actualizando contraseña de: $USER ###"
-echo -e "$LINUX_USER_PASSWORD\n$LINUX_USER_PASSWORD" | sudo passwd "$USER"
-echo sshpass -p $LINUX_USER_PASSWORD ssh $LINUX_USERNAME@$LINUX_MACHINE_NAME
-
-echo "### Iniciando el servidor vps. ###"
-
-
-rm -f .ngrok.log
-./ngrok authtoken "$NGROK_AUTH_TOKEN"
-./ngrok tcp 22 --log ".ngrok.log" &
-
-
-HAS_ERRORS=$(grep "Lo sentimos, pero ha ocurrido un error insperado." < .ngrok.log)
-
-if [[ -z "$HAS_ERRORS" ]]; then
-  echo ""
-  echo "=========================================="
-  echo "Para conectarte utiliza: $(grep -o -E "tcp://(.+)" < .ngrok.log | sed "s/tcp:\/\//ssh $USER@/" | sed "s/:/ -p /")"
-  echo "o para conectar con $(grep -o -E "tcp://(.+)" < .ngrok.log | sed "s/tcp:\/\//ssh $USER@/" | sed "s/:/ -p /")"
-  echo "=========================================="
-  
-  
+if [[ -n "$(uname | grep -i Linux)" ]]; then
+    echo -e "${INFO} Install ngrok ..."
+    curl -fsSL https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip -o ngrok.zip
+    unzip ngrok.zip ngrok
+    rm ngrok.zip
+    chmod +x ngrok
+    sudo mv ngrok /usr/local/bin
+    ngrok -v
+elif [[ -n "$(uname | grep -i Darwin)" ]]; then
+    echo -e "${INFO} Install ngrok ..."
+    curl -fsSL https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-darwin-amd64.zip -o ngrok.zip
+    unzip ngrok.zip ngrok
+    rm ngrok.zip
+    chmod +x ngrok
+    sudo mv ngrok /usr/local/bin
+    ngrok -v
+    USER=root
+    echo -e "${INFO} Set SSH service ..."
+    echo 'PermitRootLogin yes' | sudo tee -a /etc/ssh/sshd_config >/dev/null
+    sudo launchctl unload /System/Library/LaunchDaemons/ssh.plist
+    sudo launchctl load -w /System/Library/LaunchDaemons/ssh.plist
 else
-  echo "$HAS_ERRORS"
-  exit 4
+    echo -e "${ERROR} This system is not supported!"
+    exit 1
 fi
-"$@"
-sleep 10
+
+if [[ -n "${SSH_PASSWORD}" ]]; then
+    echo -e "${INFO} Set user(${USER}) password ..."
+    echo -e "${SSH_PASSWORD}\n${SSH_PASSWORD}" | sudo passwd "${USER}"
+fi
+
+echo -e "${INFO} Start ngrok proxy for SSH port..."
+screen -dmS ngrok \
+    ngrok tcp 22 \
+    --log "${LOG_FILE}" \
+    --authtoken "${NGROK_TOKEN}" \
+    --region "${NGROK_REGION:-us}"
+
+while ((${SECONDS_LEFT:=10} > 0)); do
+    echo -e "${INFO} Please wait ${SECONDS_LEFT}s ..."
+    sleep 1
+    SECONDS_LEFT=$((${SECONDS_LEFT} - 1))
+done
+
+ERRORS_LOG=$(grep "command failed" ${LOG_FILE})
+
+if [[ -e "${LOG_FILE}" && -z "${ERRORS_LOG}" ]]; then
+    SSH_CMD="$(grep -oE "tcp://(.+)" ${LOG_FILE} | sed "s/tcp:\/\//ssh ${USER}@/" | sed "s/:/ -p /")"
+    MSG="
+*GitHub Actions - ngrok session info:*
+
+⚡ *CLI:*
+\`${SSH_CMD}\`
+
+🔔 *TIPS:*
+Run '\`touch ${CONTINUE_FILE}\`' to continue to the next step.
+"
+    if [[ -n "${TELEGRAM_BOT_TOKEN}" && -n "${TELEGRAM_CHAT_ID}" ]]; then
+        echo -e "${INFO} Sending message to Telegram..."
+        curl -sSX POST "${TELEGRAM_API_URL:-https://api.telegram.org}/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d "disable_web_page_preview=true" \
+            -d "parse_mode=Markdown" \
+            -d "chat_id=${TELEGRAM_CHAT_ID}" \
+            -d "text=${MSG}" >${TELEGRAM_LOG}
+        TELEGRAM_STATUS=$(cat ${TELEGRAM_LOG} | jq -r .ok)
+        if [[ ${TELEGRAM_STATUS} != true ]]; then
+            echo -e "${ERROR} Telegram message sending failed: $(cat ${TELEGRAM_LOG})"
+        else
+            echo -e "${INFO} Telegram message sent successfully!"
+        fi
+    fi
+    while ((${PRT_COUNT:=1} <= ${PRT_TOTAL:=10})); do
+        SECONDS_LEFT=${PRT_INTERVAL_SEC:=10}
+        while ((${PRT_COUNT} > 1)) && ((${SECONDS_LEFT} > 0)); do
+            echo -e "${INFO} (${PRT_COUNT}/${PRT_TOTAL}) Please wait ${SECONDS_LEFT}s ..."
+            sleep 1
+            SECONDS_LEFT=$((${SECONDS_LEFT} - 1))
+        done
+        echo "------------------------------------------------------------------------"
+        echo "To connect to this session copy and paste the following into a terminal:"
+        echo -e "${Green_font_prefix}$SSH_CMD${Font_color_suffix}"
+        echo -e "TIPS: Run 'touch ${CONTINUE_FILE}' to continue to the next step."
+        echo "------------------------------------------------------------------------"
+        PRT_COUNT=$((${PRT_COUNT} + 1))
+    done
+else
+    echo "${ERRORS_LOG}"
+    exit 4
+fi
+
+while [[ -n $(ps aux | grep ngrok) ]]; do
+    sleep 1
+    if [[ -e ${CONTINUE_FILE} ]]; then
+        echo -e "${INFO} Continue to the next step."
+        exit 0
+    fi
+done
+
+
+作者：AM科技
+链接：https://juejin.cn/post/7462571241742024730
+来源：稀土掘金
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
