@@ -15,11 +15,11 @@ echo "sa - South America (Sao Paulo)"
 echo "jp - Japan (Tokyo)"
 echo "in - India (Mumbai)"
 read -p "choose ngrok region: " CRP
-./ngrok tcp --region $CRP 3388 &>/dev/null &
+./ngrok tcp --region $CRP 22 &>/dev/null &
 echo "===================================="
 echo "Please Wait, Installing RDP"
 echo "===================================="
-docker pull danielguerra/ubuntu-xrdp
+docker pull kalilinux/kali-rolling:latest
 clear
 echo "===================================="
 echo "Start RDP"
@@ -36,4 +36,4 @@ echo "This Script Created By ReBlue"
 echo "Hold on, it can take time."
 echo "===================================="
 echo "===================================="
-docker run --rm -p22:22 danielguerra/ubuntu-xrdp:kali > /dev/null 2>&1
+docker run --rm -p22 kalilinux/kali-rolling:latest
