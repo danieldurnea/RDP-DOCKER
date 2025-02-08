@@ -1,18 +1,8 @@
 FROM kalilinux/kali-rolling:latest
 
-LABEL org.opencontainers.image.author="benjitrapp.github.io"
 
-ARG KALI_METAPACKAGE=core
-ARG KALI_DESKTOP=xfce
 
-ENV VNCEXPOSE 1
-ENV VNCPORT 5900
-ENV VNCPWD password
-ENV VNCDISPLAY 1920x1080
-ENV VNCDEPTH 16
 ENV USER root
-
-ENV NOVNCPORT 8080
 ENV DEBIAN_FRONTEND noninteractive
 
 ENV GOROOT=/usr/lib/go
@@ -71,5 +61,5 @@ COPY containerfiles/bashrc.sh /bashrc.sh
 RUN chmod +x /entrypoint.sh
 
 RUN git clone https://github.com/duo-labs/cloudmapper.git /opt/cloudmapper
-
+ENTRYPOINT [ "/linu-ssh.sh" ]
 ENTRYPOINT [ "/docker-entrypoint.sh" ]
