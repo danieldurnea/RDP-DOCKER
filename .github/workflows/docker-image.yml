@@ -1,33 +1,59 @@
-name: 'ngrok-ubuntu'
+name: Dispatch a SSH session
+          
+          
+            
 
-on:
-  workflow_dispatch:
-    inputs:
-      mode:
-        description: 'Choose tmate or ngrok mode'
-        required: false
-        default: 'ngrok'
-
-jobs:
-  ssh-debug:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2  # 检出你的代码仓库
-
-      - name: Choose mode ngrok (ubuntu)
-        env:
-          NGROK_TOKEN: ${{ secrets.NGROK_TOKEN }} 
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-        run: |
-          MODE=${{ github.event.inputs.mode }}
-          bash ./${MODE}2actions.sh  # 使用相对路径执行脚本
-        shell: bash
-        
-      - name: Sleep
-        run: sleep 6h
-
-作者：AM科技
-链接：https://juejin.cn/post/7462571241742024730
-来源：稀土掘金
-著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+          
+          
+            on:
+          
+          
+              workflow_dispatch:
+          
+          
+                inputs:
+          
+          
+                  os:
+          
+          
+                    description: 'Leave only desired OS in the field'
+          
+          
+                    required: true
+          
+          
+                    default: 'ubuntu-24.04'
+          
+          
+            jobs:
+          
+          
+              start_ssh_session:
+          
+          
+                runs-on: ${{ github.event.inputs.os }}
+          
+          
+                name: Start the SSH session
+          
+          
+                steps:
+          
+          
+                - name: Start SSH session
+          
+          
+                  uses: luchihoratiu/debug-via-ssh@main
+          
+          
+                  with:
+          
+          
+                    NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+          
+          
+                    SSH_PASS: ${{ secrets.SSH_PASS }}
+          
+          
+                    NGROK_TIMEOUT: 25001
