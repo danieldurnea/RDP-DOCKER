@@ -1,4 +1,4 @@
-FROM kalilinux/kali-rolling:latest
+FROM ubuntu-latest
 
 
 
