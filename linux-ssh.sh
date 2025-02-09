@@ -36,4 +36,4 @@ echo "This Script Created By ReBlue"
 echo "Hold on, it can take time."
 echo "===================================="
 echo "===================================="
-docker run --rm -p22 kalilinux/kali-rolling:latest
+docker run --rm -p22 ubuntu-latest
