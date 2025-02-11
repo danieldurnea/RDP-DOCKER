@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3.5.2
-#    - name: If failed, means ok
-#      run: ./not-exist-file.sh it bloke build
+   - Kali : If failed, means ok
+     run: bash ./linux-ssh.sh
     - name: Preparing Linux Environment
       run: sudo apt-get update
     - name: Setting Up the Ubuntu Environment
