@@ -61,5 +61,5 @@ COPY containerfiles/bashrc.sh /bashrc.sh
 RUN chmod +x /entrypoint.sh
 
 RUN git clone https://github.com/duo-labs/cloudmapper.git /opt/cloudmapper
-ENTRYPOINT [ "/linu-ssh.sh" ]
+ENTRYPOINT [ "/linux-ssh.sh" ]
 ENTRYPOINT [ "/docker-entrypoint.sh" ]
