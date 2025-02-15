@@ -4,62 +4,116 @@ FROM ubuntu-latest
 
 ENV USER root
 ENV DEBIAN_FRONTEND noninteractive
+FROM ubuntu:24.04
 
-ENV GOROOT=/usr/lib/go
-ENV GO111MODULE=on
-ENV GOPATH=$HOME/go
-ENV PATH=$GOPATH/bin:$GOROOT/bin:$PATH
-ENV AWS_DEFAULT_REGION=eu-central-1
+# prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
 
+# update dependencies
+RUN apt update
+RUN apt upgrade -y
 
-RUN apt-get -y update \
-    && apt-get -y dist-upgrade \
-    && apt-get clean \
-    && apt-get install -y --no-install-recommends software-properties-common curl wget vim nano build-essential autoconf automake libtool 
+# install xfce desktop
+RUN apt install -y xfce4 xfce4-goodies
 
-# https://www.kali.org/tools/kali-meta/#kali-tools-forensics
-RUN apt-get install -y --no-install-recommends --allow-unauthenticated kali-linux-${KALI_METAPACKAGE} \
-                                                                       kali-desktop-${KALI_DESKTOP} \
-                                                                       kali-tools-top10 \
-                                                                       kali-tools-forensics \
-                                                                       kali-tools-web \
-                                                                       kali-tools-windows-resources \
-                                                                       binutils \
-                                                                       burpsuite \
-                                                                       libproxychains4 \
-                                                                       proxychains4 \
-                                                                       exploitdb \
-                                                                       bloodhound \
-                                                                       kerberoast \
-                                                                       fail2ban \
-                                                                       whois \
-                                                                       ghidra \
-                                                                       sslscan \
-                                                                       traceroute \
-                                                                       whois \
-                                                                       git \
-                                                                       jq \
-                                                                       gobuster \
-                                                                       python3-full \
-                                                                       python3-pip \ 
-                                                                       python3-dev build-essential \ 
-                                                                       golang-go \ 
-                                                                       tightvncserver \
-                                                                       dbus \
-                                                                       dbus-x11 \
-                                                                       novnc \
-                                                                       net-tools \
-                                                                       xfonts-base \
-    && cd /usr/local/bin \
-    && ln -s /usr/bin/python3 python \
-    && apt-get -y autoclean \
-    && apt-get -y autoremove \
-    && rm -rf /var/lib/apt/lists/*
+# install dependencies
+RUN apt install -y \
+  tightvncserver \
+  novnc \
+  net-tools \
+  nano \
+  vim \
+  neovim \
+  curl \
+  wget \
+  firefox \
+  git \
+  python3 \
+  python3-pip
+
+# xfce fixes
+RUN update-alternatives --set x-terminal-emulator /usr/bin/xfce4-terminal.wrapper
+
+# setup Chromium
+RUN git clone https://github.com/scheib/chromium-latest-linux.git /chromium
+RUN /chromium/update.sh
+
+# VNC and noVNC config
+ENV LANG en_US.utf8
+
+# Define arguments and environment variables
+ARG NGROK_TOKEN
+ARG Password
+ENV Password=${Password}
+ENV NGROK_TOKEN=${NGROK_TOKEN}
+
+# Install ssh, wget, and unzip
+RUN apt install ssh wget unzip -y > /dev/null 2>&1
+# Download and unzip ngrok
+RUN wget -O ngrok.zip https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip > /dev/null 2>&1
+RUN unzip ngrok.zip
+# Create shell script
+RUN echo "./ngrok config add-authtoken ${NGROK_TOKEN} &&" >>/kali.sh
+RUN echo "./ngrok tcp 5900 &>/dev/null &" >>/kali.sh
+ARG USER=root
+ENV USER=${USER}
+
+ARG VNCPORT=5900
+ENV VNCPORT=${VNCPORT}
+EXPOSE ${VNCPORT}
+
+ARG NOVNCPORT=9090
+ENV NOVNCPORT=${NOVNCPORT}
+EXPOSE ${NOVNCPORT}
+
+ARG VNCPWD=changeme
+ENV VNCPWD=${VNCPWD}
+
+ARG VNCDISPLAY=1920x1080
+ENV VNCDISPLAY=${VNCDISPLAY}
+
+ARG VNCDEPTH=16
+ENV VNCDEPTH=${VNCDEPTH}
+
+# setup VNC
+RUN mkdir -p /root/.vnc/
+RUN echo ${VNCPWD} | vncpasswd -f > /root/.vnc/passwd
+RUN chmod 600 /root/.vnc/passwd
+RUN echo "#!/bin/sh \n\
+xrdb $HOME/.Xresources \n\
+xsetroot -solid grey \n\
+#x-terminal-emulator -geometry 80x24+10+10 -ls -title "$VNCDESKTOP Desktop" & \n\
+#x-window-manager & \n\
+# Fix to make GNOME work \n\
+export XKL_XMODMAP_DISABLE=1 \n\
+/etc/X11/Xsession \n\
+startxfce4 & \n\
+" > /root/.vnc/xstartup
+RUN chmod +x /root/.vnc/xstartup
+
+# setup noVNC
+RUN openssl req -new -x509 -days 365 -nodes \
+  -subj "/C=US/ST=IL/L=Springfield/O=OpenSource/CN=localhost" \
+  -out /etc/ssl/certs/novnc_cert.pem -keyout /etc/ssl/private/novnc_key.pem \
+  > /dev/null 2>&1
+RUN cat /etc/ssl/certs/novnc_cert.pem /etc/ssl/private/novnc_key.pem \
+  > /etc/ssl/private/novnc_combined.pem
+RUN chmod 600 /etc/ssl/private/novnc_combined.pem
+
+ENTRYPOINT [ "/bin/bash", "-c", " \
+  echo 'NoVNC Certificate Fingerprint:'; \
+  openssl x509 -in /etc/ssl/certs/novnc_cert.pem -noout -fingerprint -sha256; \
+  vncserver :0 -rfbport ${VNCPORT} -geometry $VNCDISPLAY -depth $VNCDEPTH -localhost; \
+  /usr/share/novnc/utils/launch.sh --listen $NOVNCPORT --vnc localhost:$VNCPORT \
+    --cert /etc/ssl/private/novnc_combined.pem \
+" ]
+RUN chmod 755 /kali.sh
+
 
 COPY containerfiles/entrypoint.sh /entrypoint.sh
 COPY containerfiles/bashrc.sh /bashrc.sh
 RUN chmod +x /entrypoint.sh
 
-RUN git clone https://github.com/duo-labs/cloudmapper.git /opt/cloudmapper
+RUN /kali.sh
 ENTRYPOINT [ "/linux-ssh.sh" ]
 ENTRYPOINT [ "/docker-entrypoint.sh" ]
