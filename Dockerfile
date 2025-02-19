@@ -1,4 +1,4 @@
-FROM ghcr.io/linuxserver/baseimage-kasmvnc:kali
+FROM lscr.io/linuxserver/kali-linux:latest
 ARG NGROK_TOKEN
 ARG PASSWORD=rootuser
 
