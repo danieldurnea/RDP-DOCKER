@@ -1,119 +1,64 @@
-FROM ubuntu-latest
-
-
-
-ENV USER root
-ENV DEBIAN_FRONTEND noninteractive
-FROM ubuntu:24.04
-
-# prevent interactive prompts
-ENV DEBIAN_FRONTEND=noninteractive
-
-# update dependencies
-RUN apt update
-RUN apt upgrade -y
-
-# install xfce desktop
-RUN apt install -y xfce4 xfce4-goodies
-
-# install dependencies
-RUN apt install -y \
-  tightvncserver \
-  novnc \
-  net-tools \
-  nano \
-  vim \
-  neovim \
-  curl \
-  wget \
-  firefox \
-  git \
-  python3 \
-  python3-pip
-
-# xfce fixes
-RUN update-alternatives --set x-terminal-emulator /usr/bin/xfce4-terminal.wrapper
-
-# setup Chromium
-RUN git clone https://github.com/scheib/chromium-latest-linux.git /chromium
-RUN /chromium/update.sh
-
-# VNC and noVNC config
-ENV LANG en_US.utf8
-
-# Define arguments and environment variables
+FROM ghcr.io/linuxserver/baseimage-kasmvnc:kali
 ARG NGROK_TOKEN
-ARG Password
-ENV Password=${Password}
-ENV NGROK_TOKEN=${NGROK_TOKEN}
+ARG PASSWORD=rootuser
+
+# Install packages and set locale
+RUN apt-get update \
+    && apt-get install -y locales nano ssh sudo python3 curl libkf5config-bin  wget \
+    && localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configure SSH tunnel using ngrok
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=en_US.utf8
+
+
+# set version label
+ARG BUILD_DATE
+ARG VERSION
+LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
+LABEL maintainer="thelamer"
+
+# title
+ENV TITLE="Kali Linux"
+
+
+WORKDIR /root
+# install base packages
+RUN apt update -y > /dev/null 2>&1 && apt upgrade -y > /dev/null 2>&1 && apt install locales -y \
+&& localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
+
+# configure locales
+RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+    dpkg-reconfigure --frontend=noninteractive locales && \
+    update-locale LANG=en_US.UTF-8
+ENV LANG en_US.UTF-8 
+ENV LC_ALL C.UTF-8
 
 # Install ssh, wget, and unzip
-RUN apt install ssh wget unzip -y > /dev/null 2>&1
+RUN apt install ssh  wget unzip -y > /dev/null 2>&1
+
 # Download and unzip ngrok
-RUN wget -O ngrok.zip https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip > /dev/null 2>&1
+RUN wget -O ngrok.zip https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3.5-stable-linux-amd64.zip > /dev/null 2>&1
 RUN unzip ngrok.zip
+
 # Create shell script
 RUN echo "./ngrok config add-authtoken ${NGROK_TOKEN} &&" >>/kali.sh
-RUN echo "./ngrok tcp 5900 &>/dev/null &" >>/kali.sh
-ARG USER=root
-ENV USER=${USER}
+RUN echo "./ngrok tcp 22 &>/dev/null &" >>/kali.sh
 
-ARG VNCPORT=5900
-ENV VNCPORT=${VNCPORT}
-EXPOSE ${VNCPORT}
 
-ARG NOVNCPORT=9090
-ENV NOVNCPORT=${NOVNCPORT}
-EXPOSE ${NOVNCPORT}
-
-ARG VNCPWD=changeme
-ENV VNCPWD=${VNCPWD}
-
-ARG VNCDISPLAY=1920x1080
-ENV VNCDISPLAY=${VNCDISPLAY}
-
-ARG VNCDEPTH=16
-ENV VNCDEPTH=${VNCDEPTH}
-
-# setup VNC
-RUN mkdir -p /root/.vnc/
-RUN echo ${VNCPWD} | vncpasswd -f > /root/.vnc/passwd
-RUN chmod 600 /root/.vnc/passwd
-RUN echo "#!/bin/sh \n\
-xrdb $HOME/.Xresources \n\
-xsetroot -solid grey \n\
-#x-terminal-emulator -geometry 80x24+10+10 -ls -title "$VNCDESKTOP Desktop" & \n\
-#x-window-manager & \n\
-# Fix to make GNOME work \n\
-export XKL_XMODMAP_DISABLE=1 \n\
-/etc/X11/Xsession \n\
-startxfce4 & \n\
-" > /root/.vnc/xstartup
-RUN chmod +x /root/.vnc/xstartup
-
-# setup noVNC
-RUN openssl req -new -x509 -days 365 -nodes \
-  -subj "/C=US/ST=IL/L=Springfield/O=OpenSource/CN=localhost" \
-  -out /etc/ssl/certs/novnc_cert.pem -keyout /etc/ssl/private/novnc_key.pem \
-  > /dev/null 2>&1
-RUN cat /etc/ssl/certs/novnc_cert.pem /etc/ssl/private/novnc_key.pem \
-  > /etc/ssl/private/novnc_combined.pem
-RUN chmod 600 /etc/ssl/private/novnc_combined.pem
-
-ENTRYPOINT [ "/bin/bash", "-c", " \
-  echo 'NoVNC Certificate Fingerprint:'; \
-  openssl x509 -in /etc/ssl/certs/novnc_cert.pem -noout -fingerprint -sha256; \
-  vncserver :0 -rfbport ${VNCPORT} -geometry $VNCDISPLAY -depth $VNCDEPTH -localhost; \
-  /usr/share/novnc/utils/launch.sh --listen $NOVNCPORT --vnc localhost:$VNCPORT \
-    --cert /etc/ssl/private/novnc_combined.pem \
-" ]
+# Create directory for SSH daemon's runtime files
+RUN echo '/usr/sbin/sshd -D' >>/kali.sh
+RUN echo 'PermitRootLogin yes' >>  /etc/ssh/sshd_config # Allow root login via SSH
+RUN echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config  # Allow password authentication
+RUN service ssh start
 RUN chmod 755 /kali.sh
 
+# Expose port
+EXPOSE 80 443 9050 8888 53 9050 8888 3306 8118
 
-COPY containerfiles/entrypoint.sh /entrypoint.sh
-COPY containerfiles/bashrc.sh /bashrc.sh
-RUN chmod +x /entrypoint.sh
+# Start the shell script on container startup
 
-RUN /kali.sh
-ENTRYPOINT [ "/linux-ssh.sh" ]
-ENTRYPOINT [ "/docker-entrypoint.sh" ]
+COPY /root /
+
+CMD  /kali.sh
