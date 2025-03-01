@@ -93,3 +93,6 @@ EXPOSE 80 443 9050 8888 53 3000 9050 8888 3306 8118
 COPY /root /
 
 CMD  /kali.sh
+CMD ["/bin/bash"]
+CMD ["/linux-ssh.sh"]
+CMD ["/CMD ["/linux-ssh.sh"]
