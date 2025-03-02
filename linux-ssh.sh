@@ -19,7 +19,6 @@ read -p "choose ngrok region: " CRP
 echo "===================================="
 echo "Please Wait, Installing RDP"
 echo "===================================="
-docker pull kalilinux/kali-rolling:latest
 clear
 echo "===================================="
 echo "Start RDP"
