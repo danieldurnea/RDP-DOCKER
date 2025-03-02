@@ -29,11 +29,4 @@ echo "Username : ubuntu"
 echo "Password : ubuntu"
 echo "RDP Address:"
 curl --silent --show-error http://127.0.0.1:4040/api/tunnels | sed -nE 's/.*public_url":"tcp:..([^"]*).*/\1/p'
-echo "===================================="
-echo "===================================="
-echo "Do not press ctrl + c "
-echo "This Script Created By ReBlue"
-echo "Hold on, it can take time."
-echo "===================================="
-echo "===================================="
-docker run --rm -p22 ubuntu-latest
+
